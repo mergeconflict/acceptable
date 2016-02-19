@@ -1,7 +1,7 @@
 package acceptable.probability;
 
 import acceptable.data.ImmutableStack;
-import acceptable.math.IntRational;
+import acceptable.math.Rationals;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static acceptable.math.Rationals.*;
+
 // TODO cite vose
-public class IntProbabilityDistribution<A> {
+public final class IntProbabilityDistribution<A> {
     private final int size;
     private final A[] values;
     private final int[] aliases;
-    private final IntRational[] probabilities;
+    private final long[] probabilities;
 
     @SuppressWarnings("unchecked")
     // TODO what happens if there's a weight of 0 in here? is that legal?
@@ -23,7 +25,7 @@ public class IntProbabilityDistribution<A> {
 
         values = (A[]) new Object[size];
         aliases = new int[size];
-        probabilities = new IntRational[size];
+        probabilities = new long[size];
 
         int totalWeight = 0;
         for (int i = 0; i < size; ++i) {
@@ -36,11 +38,9 @@ public class IntProbabilityDistribution<A> {
                 large = ImmutableStack.empty();
 
         for (int i = 0; i < size; ++i) {
-            IntRational p = IntRational.mk(
-                    weightedValues[i].weight * size,
-                    totalWeight);
+            long p = encode(weightedValues[i].weight * size, totalWeight);
             probabilities[i] = p;
-            if (p.numerator < p.denominator) {
+            if (numerator(p) < denominator(p)) {
                 small = small.push(i);
             } else {
                 large = large.push(i);
@@ -52,10 +52,8 @@ public class IntProbabilityDistribution<A> {
             small = small.pop();
             int g = large.top();
             large = large.pop();
-            IntRational p = probabilities[g]
-                    .plus(probabilities[l])
-                    .plus(IntRational.NEGATIVE_ONE);
-            if (p.numerator < p.denominator) {
+            long p = plus(plus(probabilities[g], probabilities[l]), NEGATIVE_ONE);
+            if (numerator(p) < denominator(p)) {
                 small = small.push(g);
             } else {
                 large = large.push(g);
@@ -74,8 +72,8 @@ public class IntProbabilityDistribution<A> {
 
     public A next(Random random) {
         int bin = random.nextInt(size);
-        IntRational p = probabilities[bin];
-        return values[random.nextInt(p.denominator) < p.numerator
+        long p = probabilities[bin];
+        return values[random.nextInt(denominator(p)) < numerator(p)
                 ? bin
                 : aliases[bin]];
     }
@@ -90,13 +88,15 @@ public class IntProbabilityDistribution<A> {
                         IntWeightedValue.mk(2, 'a'),
                         IntWeightedValue.mk(3, 'b'),
                         IntWeightedValue.mk(5, 'c'));
-        System.out.println(Arrays.toString(haha.probabilities));
+        for (long probability : haha.probabilities) {
+            System.out.println(Rationals.toString(probability));
+        }
         Map<Character, Integer> lol = new HashMap<>();
         lol.put('a', 0);
         lol.put('b', 0);
         lol.put('c', 0);
         Random r = ThreadLocalRandom.current();
-        for (int i = 0; i < 1000000; ++i) {
+        for (int i = 0; i < 100000000; ++i) {
             char c = haha.next(r);
             lol.put(c, lol.get(c) + 1);
         }
