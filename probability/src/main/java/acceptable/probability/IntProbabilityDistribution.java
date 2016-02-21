@@ -1,94 +1,115 @@
 package acceptable.probability;
 
 import acceptable.data.Stack;
-import acceptable.math.Rationals;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static acceptable.math.Rationals.*;
 
-// TODO cite vose
-public final class IntProbabilityDistribution<A> {
+/**
+ * Discrete probability distribution with integer weights. Given an indexed
+ * list of weights <em>w<sub>0</sub></em>, <em>w<sub>1</sub></em>, ...
+ * <em>w<sub>size - 1</sub></em> totaling <em>Σw</em>, and an
+ * {@code IntProbabilityDistribution d} constructed with those weights, then
+ * calls to {@code d.}{@link #next(Random)} will return index <em>i</em> with
+ * probability <em>w<sub>i</sub> / Σw</em>. For example:
+ * <pre>{@code
+ * IntProbabilityDistribution d = new IntProbabilityDistribution(2, 3, 5);
+ * int sample = d.next();}</pre>
+ * Here, {@code sample} will be 0 with 20% probability, 1 with 30% probability,
+ * and 2 with 50% probability.
+ */
+public final class IntProbabilityDistribution {
+
+    /*
+     * "Alias method" implementation based on Vose, 1991: "A linear algorithm
+     * for generating random numbers with a given distribution." Rational
+     * numbers are used as probabilities here instead of floating point to avoid
+     * rounding errors.
+     */
+
     private final int size;
-    private final A[] values;
     private final int[] aliases;
     private final long[] probabilities;
 
+    /**
+     * Construct a discrete probability distribution with integer weights
+     * <em>w<sub>0</sub></em>, <em>w<sub>1</sub></em>, ...
+     * <em>w<sub>size - 1</sub></em> totaling <em>Σw</em>.
+     * @param weights indexed list of integer weights.
+     */
     @SuppressWarnings("unchecked")
-    // TODO what happens if there's a weight of 0 in here? is that legal?
-    public IntProbabilityDistribution(IntWeightedValue<A>... weightedValues) {
-        size = weightedValues.length;
-        values = (A[]) new Object[size];
+    public IntProbabilityDistribution(int... weights) {
+        size = weights.length;
         aliases = new int[size];
         probabilities = new long[size];
 
+        // compute the total weight
         int totalWeight = 0;
-        for (int i = 0; i < size; ++i) {
-            totalWeight += weightedValues[i].weight;
-            values[i] = weightedValues[i].value;
+        for (int weight : weights) {
+            totalWeight += weight;
         }
 
-        Stack<Integer> small = Stack.empty(), large = Stack.empty();
-
+        // populate the "small" and "large" stacks.
+        Stack<Integer> smalls = Stack.empty(), larges = Stack.empty();
         for (int i = 0; i < size; ++i) {
-            long p = encode(weightedValues[i].weight * size, totalWeight);
+            // normalize each int weight, such that the average weight is 1.
+            long p = encode(weights[i] * size, totalWeight);
             probabilities[i] = p;
+
+            // p < 1 is "small", p ≥ 1 is "large."
             if (numerator(p) < denominator(p)) {
-                small = small.push(i);
+                smalls = smalls.push(i);
             } else {
-                large = large.push(i);
+                larges = larges.push(i);
             }
         }
 
-        while (!small.isEmpty()) {
-            int l = small.top();
-            small = small.pop();
-            int g = large.top();
-            large = large.pop();
-            long p = plus(plus(probabilities[g], probabilities[l]), NEGATIVE_ONE);
+        while (!smalls.isEmpty()) {
+            // pop a small and large element from the top of each stack.
+            int small = smalls.top();
+            smalls = smalls.pop();
+            int large = larges.top();
+            larges = larges.pop();
+
+            // p = p_large - (1 - p_small).
+            long p = plus(plus(probabilities[large], probabilities[small]), NEGATIVE_ONE);
+
+            // as above, p < 1 is "small", p ≥ 1 is "large."
             if (numerator(p) < denominator(p)) {
-                small = small.push(g);
+                smalls = smalls.push(large);
             } else {
-                large = large.push(g);
+                larges = larges.push(large);
             }
-            aliases[l] = g;
-            probabilities[g] = p;
+
+            // set the alias for the small element, and adjust the probability
+            // of the large element.
+            aliases[small] = large;
+            probabilities[large] = p;
         }
     }
 
-    public A next(Random random) {
+    /**
+     * Return index <em>i</em> with probability <em>w<sub>i</sub> / Σw</em>,
+     * using a given random number generator.
+     * @param random Java standard random number generator.
+     * @return a random index.
+     */
+    public int next(Random random) {
         int bin = random.nextInt(size);
         long p = probabilities[bin];
-        return values[random.nextInt(denominator(p)) < numerator(p)
-                ? bin
-                : aliases[bin]];
+        return random.nextInt(denominator(p)) < numerator(p) ? bin : aliases[bin];
     }
 
-    public A next() {
+    /**
+     * Return index <em>i</em> with probability <em>w<sub>i</sub> / Σw</em>,
+     * using the current thread's random number generator.
+     * @return a random index.
+     * @see #next(Random)
+     * @see ThreadLocalRandom
+     */
+    public int next() {
         return next(ThreadLocalRandom.current());
-    }
-
-    public static void main(String[] args) {
-        IntProbabilityDistribution<Character> haha =
-                new IntProbabilityDistribution<>(
-                        IntWeightedValue.mk(2, 'a'),
-                        IntWeightedValue.mk(3, 'b'),
-                        IntWeightedValue.mk(5, 'c'));
-        for (long probability : haha.probabilities) {
-            System.out.println(Rationals.toString(probability));
-        }
-        Map<Character, Integer> lol = new HashMap<>();
-        lol.put('a', 0);
-        lol.put('b', 0);
-        lol.put('c', 0);
-        Random r = ThreadLocalRandom.current();
-        for (int i = 0; i < 100000000; ++i) {
-            char c = haha.next(r);
-            lol.put(c, lol.get(c) + 1);
-        }
-        System.out.println(lol);
     }
 }
