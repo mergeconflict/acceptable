@@ -12,6 +12,7 @@
         <module>data</module>
         <module>math</module>
         <module>probability</module>
+        <module>statistics</module>
     </modules>
 
     <build>
