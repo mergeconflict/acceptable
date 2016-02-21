@@ -2,8 +2,8 @@ package acceptable.math;
 
 import org.junit.Test;
 
-import static acceptable.math.Ints.*;
-import static org.junit.Assert.*;
+import static acceptable.math.Ints.gcd;
+import static org.junit.Assert.assertEquals;
 
 // TODO implement quickcheck clone
 public class IntsTest {

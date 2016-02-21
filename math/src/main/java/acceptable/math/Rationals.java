@@ -1,7 +1,12 @@
 package acceptable.math;
 
-import java.util.Comparator;
-
+/**
+ * Rational numbers are those which can be expressed as the quotient of two
+ * integers. This class provides methods to encode rationals in Java primitive
+ * data types (for example, packing a 32-bit <code>int</code> numerator and
+ * denominator into a 64-bit <code>long</code>) and performing basic arithmetic
+ * operations on them.
+ */
 public final class Rationals {
 
     private Rationals() {}
@@ -27,6 +32,8 @@ public final class Rationals {
      * and denominator. The number will be simplified such that the encoded
      * denominator is nonnegative, and the gcd of the encoded numerator and
      * denominator is 1.
+     * @param numerator int numerator.
+     * @param denominator int denominator.
      * @return a simplified encoding of the given rational number as a long.
      */
     public static long encode(int numerator, int denominator) {
@@ -109,8 +116,8 @@ public final class Rationals {
      * Compare two rational numbers encoded as longs.
      * @param lhs left-hand side
      * @param rhs right-hand side
-     * @return a negative number if lhs < rhs, 0 if lhs == rhs, or a positive
-     * number if lhs > rhs.
+     * @return a negative number if lhs &lt; rhs, 0 if lhs == rhs, or a positive
+     * number if lhs &gt; rhs.
      */
     public static int compare(long lhs, long rhs) {
         return numerator(minus(lhs, rhs));

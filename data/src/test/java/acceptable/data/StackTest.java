@@ -2,13 +2,13 @@ package acceptable.data;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-public class ImmutableStackTest {
+public class StackTest {
 
     @Test
     public void matchEmptyMustInvokeIfEmpty() {
-        int actual = ImmutableStack.empty().match(
+        int actual = Stack.empty().match(
                 () -> 42,
                 (head, tail) -> 0);
         assertEquals(42, actual);
@@ -16,7 +16,7 @@ public class ImmutableStackTest {
 
     @Test
     public void matchNonEmptyMustInvokeIfNonEmpty() {
-        int actual = ImmutableStack.of(42).match(
+        int actual = Stack.of(42).match(
                 () -> 0,
                 (head, tail) -> head);
         assertEquals(42, actual);

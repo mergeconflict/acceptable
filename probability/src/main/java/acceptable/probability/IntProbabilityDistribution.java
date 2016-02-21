@@ -1,9 +1,8 @@
 package acceptable.probability;
 
-import acceptable.data.ImmutableStack;
+import acceptable.data.Stack;
 import acceptable.math.Rationals;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -22,7 +21,6 @@ public final class IntProbabilityDistribution<A> {
     // TODO what happens if there's a weight of 0 in here? is that legal?
     public IntProbabilityDistribution(IntWeightedValue<A>... weightedValues) {
         size = weightedValues.length;
-
         values = (A[]) new Object[size];
         aliases = new int[size];
         probabilities = new long[size];
@@ -33,9 +31,7 @@ public final class IntProbabilityDistribution<A> {
             values[i] = weightedValues[i].value;
         }
 
-        ImmutableStack<Integer>
-                small = ImmutableStack.empty(),
-                large = ImmutableStack.empty();
+        Stack<Integer> small = Stack.empty(), large = Stack.empty();
 
         for (int i = 0; i < size; ++i) {
             long p = encode(weightedValues[i].weight * size, totalWeight);
@@ -60,13 +56,6 @@ public final class IntProbabilityDistribution<A> {
             }
             aliases[l] = g;
             probabilities[g] = p;
-        }
-
-        while (!large.isEmpty()) {
-            int g = large.top();
-            large = large.pop();
-            // TODO prove this entire loop is unnecessary???
-            // probabilities[g] = IntRational.ONE;
         }
     }
 
