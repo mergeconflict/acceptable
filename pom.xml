@@ -10,9 +10,10 @@
 
     <modules>
         <module>data</module>
+        <module>histogram</module>
         <module>math</module>
         <module>probability</module>
-        <module>statistics</module>
+        <module>stopwatch</module>
     </modules>
 
     <build>

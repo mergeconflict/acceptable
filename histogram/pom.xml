@@ -7,9 +7,9 @@
         <artifactId>acceptable-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>acceptable-statistics</artifactId>
+    <artifactId>acceptable-histogram</artifactId>
     <packaging>jar</packaging>
-    <name>Acceptable Library for Java - Statistics</name>
+    <name>Acceptable Library for Java - Histogram</name>
 
     <dependencies>
         <dependency>
